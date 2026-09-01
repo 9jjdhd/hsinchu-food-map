@@ -31,6 +31,9 @@ h1 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(3
 .city-tabs { display: flex; gap: 5px; }
 .city-tabs button { border: 0; border-radius: 12px; padding: 10px 14px; color: #4f625b; background: transparent; font-weight: 700; }
 .city-tabs button.active { color: white; background: var(--green); }
+.price-filter { display: flex; align-items: center; gap: 7px; padding-left: 12px; border-left: 1px solid var(--line); color: #68756f; font-size: 13px; white-space: nowrap; }
+.price-filter select { max-width: 195px; padding: 9px 30px 9px 10px; border: 1px solid #d9d5c9; border-radius: 11px; outline: 0; color: var(--green-dark); background: #fffdf7; font-weight: 700; cursor: pointer; }
+.price-filter select:focus-visible { border-color: var(--green); box-shadow: 0 0 0 3px rgba(31,103,87,.13); }
 .search { display: flex; align-items: center; flex: 1; gap: 10px; min-width: 180px; padding: 0 12px; border-left: 1px solid var(--line); }
 .search span { color: #76817d; font-size: 13px; }
 .search input { width: 100%; padding: 9px 0; border: 0; outline: 0; background: transparent; color: var(--green-dark); }
@@ -59,6 +62,9 @@ h1 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(3
 .restaurant-item strong { margin-bottom: 4px; color: var(--green-dark); font-size: 15px; }
 .restaurant-item span { color: #69766f; font-size: 12px; line-height: 1.5; }
 .restaurant-item .meta { margin-top: 5px; color: var(--orange); font-weight: 700; }
+.price-tier { display: inline-flex !important; margin-right: 7px; padding: 2px 7px; border-radius: 999px; color: #36584f; background: #e6eee9; font-size: 11px; font-weight: 800; vertical-align: 1px; }
+.price-tier.mid { color: #865421; background: #f7ead8; }
+.price-tier.premium { color: #7a3940; background: #f3e0e1; }
 .load-more { display: block; width: calc(100% - 28px); margin: 14px; padding: 11px; border: 1px solid #d7ded8; border-radius: 12px; color: var(--green); background: #f1f6f2; font-weight: 800; }
 .food-popup article + article { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e7e1d6; }
 .food-popup h3 { margin: 0 0 7px; color: var(--green-dark); font-size: 16px; }
@@ -78,6 +84,8 @@ footer { padding: 18px 4px 4px; color: #7b857f; font-size: 12px; text-align: cen
   .controls { flex-wrap: wrap; }
   .city-tabs { width: 100%; }
   .city-tabs button { flex: 1; }
+  .price-filter { padding-left: 0; border-left: 0; }
+  .price-filter select { max-width: 178px; }
   .search { order: 3; width: 100%; border-left: 0; border-top: 1px solid var(--line); }
   .result-count { margin-left: auto; }
   .list-toggle { display: inline-flex; }
@@ -101,6 +109,9 @@ footer { padding: 18px 4px 4px; color: #7b857f; font-size: 12px; text-align: cen
   .controls { top: 5px; gap: 7px; margin-bottom: 8px; padding: 8px; border-radius: 15px; }
   .city-tabs { gap: 3px; }
   .city-tabs button { padding: 9px 8px; font-size: 13px; }
+  .price-filter { gap: 5px; font-size: 12px; }
+  .price-filter > span { display: none; }
+  .price-filter select { max-width: 154px; padding: 8px 25px 8px 8px; font-size: 12px; }
   .result-count { width: auto; padding: 0; font-size: 12px; }
   .list-toggle { padding: 8px 10px; }
   .search { padding: 0 7px; }

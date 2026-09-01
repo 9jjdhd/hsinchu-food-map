@@ -1,5 +1,6 @@
 let rows = [];
 let selectedCity = 'all';
+let selectedPrice = 'all';
 let locationGroups = [];
 let listLimit = 50;
 let searchTimer;
@@ -26,10 +27,28 @@ function searchText(row) {
   return [row.name, row.address, row.city, row.district].filter(Boolean).join(' ').toLocaleLowerCase('zh-Hant');
 }
 
+function priceTier(row) {
+  const values = String(row.price || '')
+    .replaceAll(',', '')
+    .match(/\d+/g)
+    ?.map(Number) || [];
+  if (!values.length) return 'unknown';
+  const average = values.length === 1 ? values[0] : (values[0] + values[1]) / 2;
+  if (average <= 400) return 'budget';
+  if (average <= 800) return 'mid';
+  return 'premium';
+}
+
+function priceTierLabel(row) {
+  return {budget: '平價', mid: '中等', premium: '高價'}[priceTier(row)] || '價位未定';
+}
+
 function visibleRows() {
   const query = document.querySelector('#mapSearch').value.trim().toLocaleLowerCase('zh-Hant');
   return rows.filter(row =>
-    (selectedCity === 'all' || row.city === selectedCity) && (!query || searchText(row).includes(query))
+    (selectedCity === 'all' || row.city === selectedCity) &&
+    (selectedPrice === 'all' || priceTier(row) === selectedPrice) &&
+    (!query || searchText(row).includes(query))
   );
 }
 
@@ -41,7 +60,7 @@ function popupHtml(group) {
       <h3>${escapeHtml(row.name)}</h3>
       <p>${escapeHtml(row.address)}</p>
       <p class="rating">${escapeHtml(rating)}</p>
-      <p>每人約 ${escapeHtml(row.price || '未提供')}</p>
+      <p><span class="price-tier ${priceTier(row)}">${priceTierLabel(row)}</span> 每人約 ${escapeHtml(row.price || '未提供')}</p>
       ${row.maps_url ? `<a href="${escapeHtml(row.maps_url)}" target="_blank" rel="noreferrer">Google Maps ↗</a>` : ''}
       ${row.instagram_url ? `<a href="${escapeHtml(row.instagram_url)}" target="_blank" rel="noreferrer">Instagram ↗</a>` : ''}
     </article>`;
@@ -88,7 +107,7 @@ function renderList(items) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'restaurant-item';
-    button.innerHTML = `<strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.address)}</span><span class="meta">${row.rating == null ? '—' : `★ ${Number(row.rating).toFixed(1)}`} · 每人約 ${escapeHtml(row.price || '—')}</span>`;
+    button.innerHTML = `<strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.address)}</span><span class="meta"><b class="price-tier ${priceTier(row)}">${priceTierLabel(row)}</b>${row.rating == null ? '—' : `★ ${Number(row.rating).toFixed(1)}`} · 每人約 ${escapeHtml(row.price || '—')}</span>`;
     button.addEventListener('click', () => {
       const marker = markerByRestaurant.get(row.id);
       if (!marker) return;
@@ -157,6 +176,12 @@ document.querySelector('#mapSearch').addEventListener('input', () => {
   }, 160);
 });
 
+document.querySelector('#priceFilter').addEventListener('change', event => {
+  selectedPrice = event.target.value;
+  listLimit = 50;
+  renderMap({fit: true});
+});
+
 document.querySelector('#resetView').addEventListener('click', () => renderMap({fit: true}));
 
 const listPanel = document.querySelector('#restaurantPanel');
@@ -181,6 +206,16 @@ fetch('./data.json')
   })
   .then(data => {
     rows = data.restaurants;
+    const tierCounts = rows.reduce((counts, row) => {
+      const tier = priceTier(row);
+      counts[tier] = (counts[tier] || 0) + 1;
+      return counts;
+    }, {});
+    const tierLabels = {budget: '平價 · $400 以下', mid: '中等 · $401–800', premium: '高價 · $801 以上'};
+    Object.entries(tierLabels).forEach(([tier, label]) => {
+      const option = document.querySelector(`#priceFilter option[value="${tier}"]`);
+      option.textContent = `${label}（${tierCounts[tier] || 0}）`;
+    });
     buildLocationGroups();
     document.querySelector('#restaurantTotal').textContent = rows.length;
     document.querySelector('#positionTotal').textContent = `${locationGroups.length} 個位置 · ${data.updated_at}`;

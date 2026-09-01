@@ -63,7 +63,8 @@ h1 { margin: 0; font-family: Georgia, "Noto Serif TC", serif; font-size: clamp(3
 .restaurant-item span { color: #69766f; font-size: 12px; line-height: 1.5; }
 .restaurant-item .meta { margin-top: 5px; color: var(--orange); font-weight: 700; }
 .price-tier { display: inline-flex !important; margin-right: 7px; padding: 2px 7px; border-radius: 999px; color: #36584f; background: #e6eee9; font-size: 11px; font-weight: 800; vertical-align: 1px; }
-.price-tier.mid { color: #865421; background: #f7ead8; }
+.price-tier.mid-low { color: #5d6625; background: #edf0d8; }
+.price-tier.mid-high { color: #865421; background: #f7ead8; }
 .price-tier.premium { color: #7a3940; background: #f3e0e1; }
 .load-more { display: block; width: calc(100% - 28px); margin: 14px; padding: 11px; border: 1px solid #d7ded8; border-radius: 12px; color: var(--green); background: #f1f6f2; font-weight: 800; }
 .food-popup article + article { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e7e1d6; }

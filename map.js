@@ -34,13 +34,14 @@ function priceTier(row) {
     ?.map(Number) || [];
   if (!values.length) return 'unknown';
   const average = values.length === 1 ? values[0] : (values[0] + values[1]) / 2;
-  if (average <= 400) return 'budget';
-  if (average <= 800) return 'mid';
+  if (average <= 200) return 'budget';
+  if (average <= 400) return 'mid-low';
+  if (average <= 600) return 'mid-high';
   return 'premium';
 }
 
 function priceTierLabel(row) {
-  return {budget: '平價', mid: '中等', premium: '高價'}[priceTier(row)] || '價位未定';
+  return {budget: '平價', 'mid-low': '中下', 'mid-high': '中上', premium: '高價'}[priceTier(row)] || '價位未定';
 }
 
 function visibleRows() {
@@ -211,7 +212,12 @@ fetch('./data.json')
       counts[tier] = (counts[tier] || 0) + 1;
       return counts;
     }, {});
-    const tierLabels = {budget: '平價 · $400 以下', mid: '中等 · $401–800', premium: '高價 · $801 以上'};
+    const tierLabels = {
+      budget: '平價 · $200 以下',
+      'mid-low': '中下 · $200–400',
+      'mid-high': '中上 · $400–600',
+      premium: '高價 · $600 以上',
+    };
     Object.entries(tierLabels).forEach(([tier, label]) => {
       const option = document.querySelector(`#priceFilter option[value="${tier}"]`);
       option.textContent = `${label}（${tierCounts[tier] || 0}）`;

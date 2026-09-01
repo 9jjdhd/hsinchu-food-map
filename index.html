@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#173f35">
+  <meta name="description" content="收錄新竹市與新竹縣餐廳位置、Google 評分、評論數與人均價格的互動美食地圖。">
+  <title>新竹美食地圖</title>
+  <link rel="preconnect" href="https://tile.openstreetmap.org">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="./map.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">HSINCHU FOOD MAP</p>
+        <h1>新竹美食地圖</h1>
+        <p class="intro">從 Instagram 收藏整理出的新竹市、新竹縣餐廳，一張地圖快速查看。</p>
+      </div>
+      <div class="hero-actions">
+        <div class="summary"><strong id="restaurantTotal">—</strong><span>家餐廳</span><small id="positionTotal">載入中</small></div>
+        <button id="shareMap" class="share-button" type="button" hidden>分享地圖</button>
+      </div>
+    </header>
+
+    <section class="controls" aria-label="地圖篩選">
+      <div class="city-tabs" role="group" aria-label="縣市">
+        <button class="active" type="button" data-city="all" aria-pressed="true">全部</button>
+        <button type="button" data-city="新竹市" aria-pressed="false">新竹市</button>
+        <button type="button" data-city="新竹縣" aria-pressed="false">新竹縣</button>
+      </div>
+      <label class="search"><span>搜尋</span><input id="mapSearch" type="search" placeholder="店名、地址或地區" autocomplete="off"></label>
+      <span id="resultCount" class="result-count">—</span>
+    </section>
+
+    <section class="layout">
+      <div class="map-wrap">
+        <div id="restaurantMap" aria-label="新竹餐廳互動地圖"></div>
+        <div class="legend"><span><i class="city-dot"></i>新竹市</span><span><i class="county-dot"></i>新竹縣</span></div>
+      </div>
+      <aside class="list-panel" aria-label="地圖中的餐廳">
+        <div class="list-title"><strong>店家清單</strong><span>點選即可定位</span></div>
+        <div id="restaurantList" class="restaurant-list"></div>
+      </aside>
+    </section>
+    <footer>店家資料以 Google Maps 查詢結果為準 · 地圖資料 © OpenStreetMap contributors</footer>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="./map.js"></script>
+</body>
+</html>

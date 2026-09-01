@@ -1,11 +1,18 @@
 let rows = [];
 let selectedCity = 'all';
-const map = L.map('restaurantMap', {preferCanvas: true}).setView([24.79, 121.03], 11);
+let locationGroups = [];
+let listLimit = 50;
+let searchTimer;
+
+const map = L.map('restaurantMap', {preferCanvas: true, zoomControl: true}).setView([24.79, 121.03], 11);
 const markerLayer = L.layerGroup().addTo(map);
 const markerByRestaurant = new Map();
+const canvasRenderer = L.canvas({padding: .35, tolerance: 8});
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
+  updateWhenIdle: true,
+  keepBuffer: 2,
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }).addTo(map);
 
@@ -41,13 +48,29 @@ function popupHtml(group) {
   }).join('')}</div>`;
 }
 
-function markerIcon(group) {
-  const county = group.every(row => row.city === '新竹縣') ? ' county' : '';
-  const label = group.length > 1 ? group.length : '●';
-  return L.divIcon({
-    className: 'food-map-icon',
-    html: `<div class="food-pin${county}"><span>${label}</span></div>`,
-    iconSize: [34, 34], iconAnchor: [17, 31], popupAnchor: [0, -29],
+function buildLocationGroups() {
+  const grouped = new Map();
+  rows.forEach(row => {
+    const key = `${Number(row.latitude).toFixed(5)},${Number(row.longitude).toFixed(5)}`;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(row);
+  });
+
+  locationGroups = Array.from(grouped.values()).map(group => {
+    const county = group.every(row => row.city === '新竹縣');
+    const marker = L.circleMarker([group[0].latitude, group[0].longitude], {
+      renderer: canvasRenderer,
+      radius: group.length > 1 ? 9 : 7,
+      color: '#fffdf7',
+      weight: 2,
+      fillColor: county ? '#d97837' : '#1f6757',
+      fillOpacity: .94,
+      opacity: 1,
+    }).bindTooltip(group.length === 1 ? group[0].name : `${group.length} 家店`, {
+      direction: 'top', offset: [0, -8],
+    }).bindPopup(popupHtml(group), {maxWidth: 350});
+    group.forEach(row => markerByRestaurant.set(row.id, marker));
+    return {rows: group, marker};
   });
 }
 
@@ -58,45 +81,59 @@ function renderList(items) {
     list.innerHTML = '<p class="empty">找不到符合條件的店家。</p>';
     return;
   }
-  items.slice().sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant')).forEach(row => {
+
+  const sorted = items.slice().sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  const fragment = document.createDocumentFragment();
+  sorted.slice(0, listLimit).forEach(row => {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'restaurant-item';
     button.innerHTML = `<strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.address)}</span><span class="meta">${row.rating == null ? '—' : `★ ${Number(row.rating).toFixed(1)}`} · 每人約 ${escapeHtml(row.price || '—')}</span>`;
     button.addEventListener('click', () => {
       const marker = markerByRestaurant.get(row.id);
-      if (marker) {
-        map.flyTo(marker.getLatLng(), Math.max(map.getZoom(), 16), {duration: .65});
-        marker.openPopup();
+      if (!marker) return;
+      map.flyTo(marker.getLatLng(), Math.max(map.getZoom(), 16), {duration: .45});
+      marker.openPopup();
+      if (matchMedia('(max-width: 820px)').matches) {
         document.querySelector('#restaurantMap').scrollIntoView({behavior: 'smooth', block: 'center'});
       }
     });
-    list.append(button);
+    fragment.append(button);
   });
+  list.append(fragment);
+
+  if (sorted.length > listLimit) {
+    const more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'load-more';
+    more.textContent = `再顯示 ${Math.min(50, sorted.length - listLimit)} 家`;
+    more.addEventListener('click', () => {
+      listLimit += 50;
+      renderList(items);
+    });
+    list.append(more);
+  }
 }
 
-function renderMap() {
+function renderMap({fit = false} = {}) {
   const items = visibleRows();
-  markerLayer.clearLayers();
-  markerByRestaurant.clear();
-  const groups = new Map();
-  items.forEach(row => {
-    const key = `${Number(row.latitude).toFixed(5)},${Number(row.longitude).toFixed(5)}`;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(row);
-  });
+  const visibleIds = new Set(items.map(row => row.id));
   const markers = [];
-  groups.forEach(group => {
-    const marker = L.marker([group[0].latitude, group[0].longitude], {icon: markerIcon(group)})
-      .bindPopup(popupHtml(group), {maxWidth: 350})
-      .bindTooltip(group.length === 1 ? group[0].name : `${group.length} 家店`, {direction: 'top', offset: [0, -26]})
-      .addTo(markerLayer);
-    markers.push(marker);
-    group.forEach(row => markerByRestaurant.set(row.id, marker));
+  markerLayer.clearLayers();
+
+  locationGroups.forEach(location => {
+    const matched = location.rows.filter(row => visibleIds.has(row.id));
+    if (!matched.length) return;
+    location.marker.setPopupContent(popupHtml(matched));
+    location.marker.addTo(markerLayer);
+    markers.push(location.marker);
   });
-  document.querySelector('#resultCount').textContent = `${items.length} 家 · ${groups.size} 個位置`;
+
+  document.querySelector('#resultCount').textContent = `${items.length} 家 · ${markers.length} 個位置`;
   renderList(items);
-  if (markers.length) map.fitBounds(L.featureGroup(markers).getBounds().pad(.08), {maxZoom: 16});
+  if (fit && markers.length) {
+    map.fitBounds(L.featureGroup(markers).getBounds().pad(.08), {maxZoom: 16, animate: false});
+  }
 }
 
 document.querySelectorAll('[data-city]').forEach(button => {
@@ -107,10 +144,29 @@ document.querySelectorAll('[data-city]').forEach(button => {
       item.classList.toggle('active', active);
       item.setAttribute('aria-pressed', String(active));
     });
-    renderMap();
+    listLimit = 50;
+    renderMap({fit: true});
   });
 });
-document.querySelector('#mapSearch').addEventListener('input', renderMap);
+
+document.querySelector('#mapSearch').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    listLimit = 50;
+    renderMap();
+  }, 160);
+});
+
+document.querySelector('#resetView').addEventListener('click', () => renderMap({fit: true}));
+
+const listPanel = document.querySelector('#restaurantPanel');
+const listToggle = document.querySelector('#toggleList');
+listToggle.addEventListener('click', () => {
+  const open = listPanel.classList.toggle('open');
+  listToggle.setAttribute('aria-expanded', String(open));
+  listToggle.textContent = open ? '收起清單' : '查看清單';
+  if (open) listPanel.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+});
 
 const shareButton = document.querySelector('#shareMap');
 if (navigator.share) {
@@ -125,12 +181,14 @@ fetch('./data.json')
   })
   .then(data => {
     rows = data.restaurants;
-    const positions = new Set(rows.map(row => `${Number(row.latitude).toFixed(5)},${Number(row.longitude).toFixed(5)}`));
+    buildLocationGroups();
     document.querySelector('#restaurantTotal').textContent = rows.length;
-    document.querySelector('#positionTotal').textContent = `${positions.size} 個位置 · ${data.updated_at}`;
-    renderMap();
+    document.querySelector('#positionTotal').textContent = `${locationGroups.length} 個位置 · ${data.updated_at}`;
+    renderMap({fit: true});
+    document.querySelector('#mapLoading').classList.add('hidden');
   })
   .catch(error => {
+    document.querySelector('#mapLoading').classList.add('hidden');
     document.querySelector('#restaurantList').innerHTML = `<p class="empty">${escapeHtml(error.message)}，請稍後再試。</p>`;
     document.querySelector('#resultCount').textContent = '載入失敗';
   });

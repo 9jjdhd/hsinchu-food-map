@@ -8,7 +8,7 @@
   <title>新竹美食地圖</title>
   <link rel="preconnect" href="https://tile.openstreetmap.org">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-  <link rel="stylesheet" href="./map.css">
+  <link rel="stylesheet" href="./map.css?v=2">
 </head>
 <body>
   <main class="shell">
@@ -32,14 +32,17 @@
       </div>
       <label class="search"><span>搜尋</span><input id="mapSearch" type="search" placeholder="店名、地址或地區" autocomplete="off"></label>
       <span id="resultCount" class="result-count">—</span>
+      <button id="toggleList" class="list-toggle" type="button" aria-expanded="false" aria-controls="restaurantPanel">查看清單</button>
     </section>
 
     <section class="layout">
       <div class="map-wrap">
         <div id="restaurantMap" aria-label="新竹餐廳互動地圖"></div>
+        <div id="mapLoading" class="map-loading"><span></span>正在載入地圖</div>
+        <button id="resetView" class="reset-view" type="button">顯示全部</button>
         <div class="legend"><span><i class="city-dot"></i>新竹市</span><span><i class="county-dot"></i>新竹縣</span></div>
       </div>
-      <aside class="list-panel" aria-label="地圖中的餐廳">
+      <aside id="restaurantPanel" class="list-panel" aria-label="地圖中的餐廳">
         <div class="list-title"><strong>店家清單</strong><span>點選即可定位</span></div>
         <div id="restaurantList" class="restaurant-list"></div>
       </aside>
@@ -48,6 +51,6 @@
   </main>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="./map.js"></script>
+  <script src="./map.js?v=2"></script>
 </body>
 </html>
